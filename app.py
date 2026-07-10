@@ -255,3 +255,14 @@ elif choice == "Orders":
         }
 
         #Input layouts remainsssss!!
+        c1, c2 = st.columns(2)
+    with c1:
+        c_name = st.text_input("Customer Name", value=st.session_state.order_data['c_name'])
+        c_phone = st.text_input("Phone Number", value=st.session_state.order_data['c_phone'])
+        c_addr = st.text_area("Address", value=st.session_state.order_data['c_addr'])
+    with c2: 
+        p_name = st.text_input("Product Name", value=st.session_state.order_data['p_name'])
+        p_code = st.text_input("Product Number (Code)", value=st.session_state.order_data['p_code'])
+        p_qty = st.number_input("Quantity", min_value=1, value=st.session_state.order_data['p_qty'])
+        p_pay = st.selectbox("Payment", ["Cash", "Fonepay", "D_Wallets"])
+        p_date = st.date_input("Date", datetime.now())
