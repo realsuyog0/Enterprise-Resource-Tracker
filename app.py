@@ -53,28 +53,150 @@ init_db()
 def login_page():
     st.markdown("""
         <style>
-        .stApp { background: linear-gradient(135deg, #0a2e1f 0%, #164a33 50%, #2d5a4c 100%); color: white; }
-        .login-box { 
-            background-color: rgba(255, 255, 255, 0.05); 
-            padding: 30px; 
-            border-radius: 20px; 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            backdrop-filter: blur(15px); 
-            text-align: center; 
-            max-width: 450px; 
-            margin: auto; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .stImage > img {
-            border-radius: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0px 8px 20px rgba(0,0,0,0.4);
-            margin-bottom: 20px;
-        }
-        .stButton>button { background: #2d5a4c !important; color: white !important; width: 100%; border-radius: 10px; }
-        </style>
+
+    .stApp{
+        background: linear-gradient(135deg,#0b1f3a 0%, #123b63 45%, #167c80 100%);
+        color:#F8FAFC;
+        font-family:"Segoe UI",sans-serif;
+    }
+
+
+    .login-box{
+        background:rgba(255,255,255,0.08);
+        backdrop-filter:blur(18px);
+
+        border:1px solid rgba(255,255,255,0.15);
+
+        border-radius:22px;
+
+        padding:40px;
+
+        max-width:470px;
+
+        margin:auto;
+
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+
+        box-shadow:
+            0 15px 40px rgba(0,0,0,.35);
+    }
+                
+    .stImage img{
+        border-radius:18px;
+
+        padding:10px;
+
+        background:white;
+
+        box-shadow:
+            0 12px 30px rgba(0,0,0,.25);
+
+        margin-bottom:25px;
+    }
+
+ 
+    .stButton>button{
+
+        width:100%;
+
+        border:none;
+
+        border-radius:12px;
+
+        padding:12px;
+
+        font-size:16px;
+
+        font-weight:600;
+
+        color:white !important;
+
+        background:linear-gradient(90deg,#0E5CAD,#1AAE9F);
+
+        transition:.3s;
+
+        box-shadow:
+            0 8px 20px rgba(0,0,0,.25);
+
+    }
+
+    .stButton>button:hover{
+
+        transform:translateY(-2px);
+
+        background:linear-gradient(90deg,#0A4C90,#158D82);
+
+    }
+
+
+    div[data-baseweb="input"]{
+
+        border-radius:12px;
+
+        border:1px solid rgba(255,255,255,.15);
+
+        background:rgba(255,255,255,.05);
+
+    }
+
+    div[data-baseweb="input"]:focus-within{
+
+        border:1px solid #1AAE9F;
+
+        box-shadow:0 0 0 3px rgba(26,174,159,.25);
+
+    }
+
+    input{
+        color:white !important;
+    }
+
+
+    div[data-baseweb="select"]{
+
+        border-radius:12px;
+
+    }
+
+
+    h1{
+        color:white;
+        font-weight:700;
+        letter-spacing:.5px;
+    }
+
+    h2,h3,h4{
+        color:#EAF4FF;
+        font-weight:600;
+    }
+
+    p,label{
+        color:#D6E4F0 !important;
+    }
+
+    hr{
+        border:none;
+        height:1px;
+        background:rgba(255,255,255,.15);
+    }
+
+
+    ::-webkit-scrollbar{
+        width:8px;
+    }
+
+    ::-webkit-scrollbar-thumb{
+        background:#1AAE9F;
+        border-radius:10px;
+    }
+
+    ::-webkit-scrollbar-track{
+        background:#0b1f3a;
+    }
+
+</style>
         """, unsafe_allow_html=True)
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     with st.container():
@@ -266,3 +388,7 @@ elif choice == "Orders":
         p_qty = st.number_input("Quantity", min_value=1, value=st.session_state.order_data['p_qty'])
         p_pay = st.selectbox("Payment", ["Cash", "Fonepay", "D_Wallets"])
         p_date = st.date_input("Date", datetime.now())
+
+    
+
+            
