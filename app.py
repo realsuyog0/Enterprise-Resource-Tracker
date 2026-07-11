@@ -64,35 +64,25 @@ def login_page():
     .login-box{
         background:rgba(255,255,255,0.08);
         backdrop-filter:blur(18px);
-
         border:1px solid rgba(255,255,255,0.15);
-
         border-radius:22px;
-
         padding:40px;
-
         max-width:470px;
-
         margin:auto;
-
         display:flex;
         flex-direction:column;
         align-items:center;
-
         box-shadow:
             0 15px 40px rgba(0,0,0,.35);
     }
-                
+
+
     .stImage img{
         border-radius:18px;
-
         padding:10px;
-
         background:white;
-
         box-shadow:
             0 12px 30px rgba(0,0,0,.25);
-
         margin-bottom:25px;
     }
 
@@ -100,53 +90,34 @@ def login_page():
     .stButton>button{
 
         width:100%;
-
         border:none;
-
         border-radius:12px;
-
         padding:12px;
-
         font-size:16px;
-
         font-weight:600;
-
         color:white !important;
-
         background:linear-gradient(90deg,#0E5CAD,#1AAE9F);
-
         transition:.3s;
-
         box-shadow:
             0 8px 20px rgba(0,0,0,.25);
-
     }
 
     .stButton>button:hover{
-
         transform:translateY(-2px);
-
         background:linear-gradient(90deg,#0A4C90,#158D82);
 
     }
 
 
     div[data-baseweb="input"]{
-
         border-radius:12px;
-
         border:1px solid rgba(255,255,255,.15);
-
         background:rgba(255,255,255,.05);
-
     }
 
     div[data-baseweb="input"]:focus-within{
-
         border:1px solid #1AAE9F;
-
         box-shadow:0 0 0 3px rgba(26,174,159,.25);
-
     }
 
     input{
@@ -157,7 +128,6 @@ def login_page():
     div[data-baseweb="select"]{
 
         border-radius:12px;
-
     }
 
 
@@ -388,6 +358,44 @@ elif choice == "Orders":
         p_qty = st.number_input("Quantity", min_value=1, value=st.session_state.order_data['p_qty'])
         p_pay = st.selectbox("Payment", ["Cash", "Fonepay", "D_Wallets"])
         p_date = st.date_input("Date", datetime.now())
+
+        st.session_state.order_data.update({
+        'c_name': c_name, 'c_phone': c_phone, 'c_addr': c_addr,
+        'p_name': p_name, 'p_code': p_code, 'p_qty': p_qty
+    })
+
+    if st.button("Submit Order", type="primary"):
+        if c_name and p_name:
+            conn = sqlite3.connect(DB_NAME)
+            
+            #Collision check
+            codes_in_stock = conn.execute(
+                "SELECT DISTINCT code_number FROM products WHERE product_name = ? AND unit > 0", 
+                (p_name,)
+            ).fetchall()
+
+            if len(codes_in_stock) > 1 and not p_code:
+                st.error(f"⚠️ Multiple codes found for '{p_name}'. Please enter a valid code.")
+                conn.close()
+            else:
+                # Search for specific stock
+                if p_code:
+                    stock = conn.execute("SELECT unit FROM products WHERE product_name = ? AND code_number = ?", (p_name, p_code)).fetchone()
+                else:
+                    stock = conn.execute("SELECT unit FROM products WHERE product_name = ?", (p_name,)).fetchone()
+
+                if stock is None:
+                    st.error(f" Error: Product '{p_name}' not found. Check the name and try again.")
+                    conn.close()
+                elif stock[0] < p_qty:
+                    st.error(f" Error: Not enough stock!")
+                    conn.close()
+                else:
+                    #  SUCCESS CASE 
+                    conn.execute("INSERT INTO pending (customer_name, address, phone_number, product_name, product_number, quantity, payment_method, ordered_date) VALUES (?,?,?,?,?,?,?,?)",
+                                 (c_name, c_addr, c_phone, p_name, p_code, p_qty, p_pay, p_date.strftime("%Y-%m-%d")))
+                    conn.commit()
+                    conn.close()
 
     
 
