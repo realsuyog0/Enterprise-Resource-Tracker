@@ -391,11 +391,31 @@ elif choice == "Orders":
                     st.error(f" Error: Not enough stock!")
                     conn.close()
                 else:
-                    #  SUCCESS CASE 
+                    
                     conn.execute("INSERT INTO pending (customer_name, address, phone_number, product_name, product_number, quantity, payment_method, ordered_date) VALUES (?,?,?,?,?,?,?,?)",
                                  (c_name, c_addr, c_phone, p_name, p_code, p_qty, p_pay, p_date.strftime("%Y-%m-%d")))
                     conn.commit()
                     conn.close()
+                    
+                    # 3. DISPLAY BLUE MESSAGE IMMEDIATELY
+                    msg_slot = st.empty()
+                    msg_slot.info(f"✅ Success: Order for '{p_name}' placed on Pending list for {c_name}!")
+                    
+                    # 4. RESET DATA IN BACKGROUND
+                    st.session_state.order_data = {
+                        'c_name': '', 'c_phone': '', 'c_addr': '', 
+                        'p_name': '', 'p_code': '', 'p_qty': 1
+                    }
+
+                    # 5. HOLD FOR 5 SECONDS
+                    import time
+                    time.sleep(5)
+                    
+                    # 6. CLEAR MESSAGE AND REFRESH FORM
+                    msg_slot.empty()
+                    st.rerun()
+        else:
+            st.error("Missing Info: Customer Name and Product Name are required.")
 
     
 
