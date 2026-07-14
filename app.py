@@ -417,6 +417,85 @@ elif choice == "Orders":
         else:
             st.error("Missing Info: Customer Name and Product Name are required.")
 
+elif choice == "Pending":
+    st.title("Pending Orders List")
+    conn = sqlite3.connect(DB_NAME)
+    df_p = pd.read_sql_query("SELECT * FROM pending", conn)
+    conn.close()
+    if not df_p.empty:
+        select_all_p = st.checkbox("Select All Orders", key="psel_all")
+        delete_ids_p = []
+        h = st.columns([0.4, 0.4, 1.2, 1.5, 1.2, 0.8, 1.2, 1.2, 1.5])
+        for i, cn in enumerate(["Del", "S.No", "Date", "Customer", "Product", "Qty", "Payment", "Phone", "Status"]): h[i].write(f"**{cn}**")
+        for idx, (i, row) in enumerate(df_p.iterrows(), start=1):
+            r = st.columns([0.4, 0.4, 1.2, 1.5, 1.2, 0.8, 1.2, 1.2, 1.5])
+            is_checked_p = r[0].checkbox(" ", key=f"p_del_{row['id']}", value=select_all_p)
+            if is_checked_p: delete_ids_p.append(row['id'])
+            r[1].write(idx); r[2].write(row['ordered_date']); r[3].write(row['customer_name']); r[4].write(row['product_name'])
+            r[5].write(str(row['quantity'])); r[6].write(row['payment_method']); r[7].write(row['phone_number'])
+            with r[8]:
+                s_price = st.number_input("Sell Price", min_value=0.0, key=f"sp_{row['id']}")
+                if st.button("Confirm", key=f"sale_{row['id']}"):
+                    conn = sqlite3.connect(DB_NAME)
+                    item = conn.execute("SELECT cost_price FROM products WHERE product_name = ?", (row['product_name'],)).fetchone()
+                    if item:
+                        profit = (s_price - item[0]) * row['quantity']
+                        conn.execute("UPDATE products SET unit = unit - ? WHERE product_name = ?", (row['quantity'], row['product_name']))
+                        conn.execute("INSERT INTO sold (customer_name, phone_number, product_name, quantity, selling_price, profit, sold_date) VALUES (?,?,?,?,?,?,?)",
+                                     (row['customer_name'], row['phone_number'], row['product_name'], row['quantity'], s_price, profit, row['ordered_date']))
+                        conn.execute("DELETE FROM pending WHERE id = ?", (row['id'],))
+                        conn.commit(); conn.close(); st.rerun()
+                    else: st.error("Product Error!"); conn.close()
+
+        if delete_ids_p:
+            st.warning(f"{len(delete_ids_p)} orders selected.")
+            if st.button("🗑️ Delete Selected Orders", type="primary"):
+                conn = sqlite3.connect(DB_NAME)
+                conn.execute(f"DELETE FROM pending WHERE id IN ({','.join(map(str, delete_ids_p))})")
+                conn.commit(); conn.close(); st.rerun()
+    else: st.info("No pending orders.")
+
+elif choice == "Sold":
+    st.title("Sales History")
+    conn = sqlite3.connect(DB_NAME)
+    df_s = pd.read_sql_query("SELECT * FROM sold", conn)
+    conn.close()
+    if not df_s.empty:
+        h = st.columns([0.5, 1, 1.5, 1, 1.5, 0.8, 1.2, 1.2])
+        for i, head in enumerate(["S.No", "Date", "Customer", "Number", "Product", "Unit", "Sell Price", "Profit"]): h[i].write(f"**{head}**")
+        for idx, (i, row) in enumerate(df_s.iterrows(), start=1):
+            r = st.columns([0.5, 1, 1.5, 1, 1.5, 0.8, 1.2, 1.2])
+            r[0].write(idx); r[1].write(row['sold_date']); r[2].write(row['customer_name']); r[3].write(row['phone_number'])
+            r[4].write(row['product_name']); r[5].write(str(row['quantity'])); r[6].write(f"{row['selling_price']}"); r[7].write(f"{row['profit']}")
+    else: st.info("No sales yet.")
+
+elif choice == "Analysis":
+    st.markdown("<h3 style='text-align: center; color: #2d5a4c;'>Business Growth & Daily Wins ✨</h3>", unsafe_allow_html=True)
+    conn = sqlite3.connect(DB_NAME)
+    df_s = pd.read_sql_query("SELECT sold_date, profit, quantity FROM sold", conn)
+    conn.close()
+    if not df_s.empty:
+        df_s['sold_date'] = pd.to_datetime(df_s['sold_date']).dt.date
+        daily_stats = df_s.groupby('sold_date').agg(Total_Profit=('profit', 'sum'), Items_Sold=('quantity', 'sum')).reset_index()
+        daily_stats = daily_stats.sort_values('sold_date')
+        st.markdown("---")
+        m1, m2, m3 = st.columns(3)
+        total_items_lifetime = int(df_s['quantity'].sum())
+        m1.metric("Lifetime Items Sold", f"{total_items_lifetime}")
+        latest = daily_stats.iloc[-1]
+        m2.metric("Today's Profit", f"Rs. {latest['Total_Profit']:,.0f} ✨")
+        m3.metric("Today's Items", f"{int(latest['Items_Sold'])} Units")
+        st.markdown("---")
+        import plotly.express as px
+        fig = px.bar(daily_stats, x='sold_date', y='Total_Profit', labels={'Total_Profit': 'Profit (Rs.)'}, hover_data=['Items_Sold'])
+        fig.update_traces(marker_color='#2d5a4c', hoverlabel=dict(bgcolor="#164a33", font_color="white"))
+        fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", xaxis=dict(type='category'), yaxis=dict(showgrid=False), height=350)
+        st.plotly_chart(fig, use_container_width=True)
+    else: st.info("Start confirming orders to see your analytics here!")
+
+elif choice == "Settings":
+    st.title("⚙️ System Settings")
+
     
 
             
