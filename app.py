@@ -172,11 +172,11 @@ def login_page():
     with st.container():
         st.markdown("<div class='login-box'>", unsafe_allow_html=True)
         # try:
-        
+        #     # Change "photo.png" to your file name if different
         #     st.image("photo.png", width=250) 
         # except:
-        #     st.markdown(" ", unsafe_allow_html=True)
-        st.markdown("<h1 style='color:white; margin-top:0;'>Enterprise-Resource-Tracker</h1>", unsafe_allow_html=True)
+        #     st.markdown("💎", unsafe_allow_html=True)
+        st.markdown("<h1 style='color:white; margin-top:0;'>PS Jewelry</h1>", unsafe_allow_html=True)
         access_key_input = st.text_input("Access Key", type="password")
         if st.button("Unlock System"):
             conn = sqlite3.connect(DB_NAME)
@@ -193,8 +193,8 @@ if "password_correct" not in st.session_state or not st.session_state["password_
     login_page()
     st.stop()
 
-    # --- 3. MAIN APP CONFIG ---
-st.set_page_config(page_title="Resource Tracker", layout="wide")
+# --- 3. MAIN APP CONFIG ---
+st.set_page_config(page_title="PS Jewelry Manager", layout="wide")
 
 st.markdown("""
     <style>
@@ -204,7 +204,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.sidebar.markdown("<h2 style='text-align: center; color: white;'>Resource Tracker</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<h2 style='text-align: center; color: white;'>PS Jewelry</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 menu = ["InStock", "Unsold", "Orders", "Pending", "Sold", "Analysis", "Settings"]
 choice = st.sidebar.radio(" ", menu)
@@ -214,7 +214,7 @@ if st.sidebar.button("Logout"):
     st.session_state["password_correct"] = False
     st.rerun()
 
-    # --- SHARED UTILITY: DATA VIEW ---
+# --- SHARED UTILITY: DATA VIEW ---
 def display_inventory_table(df, title):
     st.subheader(title)
     col_s1, col_s2 = st.columns([3, 1])
@@ -247,7 +247,7 @@ def display_inventory_table(df, title):
             r[1].write(idx)
             r[2].write(row['product_name']); r[3].write(row['code_number'])
             
-            # Handle "Sold Out" status visually
+            # Change 2: Handle "Sold Out" status visually
             if row['unit'] <= 0:
                 r[4].markdown("<span style='color:red; font-weight:bold;'>Sold Out</span>", unsafe_allow_html=True)
             else:
@@ -257,7 +257,7 @@ def display_inventory_table(df, title):
 
         if delete_ids:
             st.warning(f"You have selected {len(delete_ids)} item(s).")
-            if st.button(f" Delete Selected from {title}", type="primary"):
+            if st.button(f"🗑️ Delete Selected from {title}", type="primary"):
                 conn = sqlite3.connect(DB_NAME)
                 conn.execute(f"DELETE FROM products WHERE id IN ({','.join(map(str, delete_ids))})")
                 conn.commit(); conn.close(); st.rerun()
@@ -296,7 +296,7 @@ if choice == "InStock":
                             "UPDATE products SET unit = ?, cost_price = ?, arrival_date = ? WHERE id = ?",
                             (p_unit, p_cost, p_arrival.strftime("%Y-%m-%d"), e_id)
                         )
-                        st.success(f" Restocked Sold Out item: {p_name}")
+                        st.success(f"🔄 Restocked Sold Out item: {p_name}")
                     
                     #  If In Stock, only update if the price is the same
                     elif e_cost == p_cost:
@@ -305,14 +305,14 @@ if choice == "InStock":
                             "UPDATE products SET unit = ?, arrival_date = ? WHERE id = ?",
                             (new_total, p_arrival.strftime("%Y-%m-%d"), e_id)
                         )
-                        st.success(f" Added units to existing stock.")
+                        st.success(f"➕ Added units to existing stock.")
                     
                     #  If In Stock but price is different, create new row
                     else:
                         conn.execute(
                             "INSERT INTO products (product_name, code_number, unit, cost_price, arrival_date) VALUES (?,?,?,?,?)",
                             (p_name, p_code, p_unit, p_cost, p_arrival.strftime("%Y-%m-%d")))
-                        st.success(f" Different price detected. Created new row.")
+                        st.success(f"✨ Different price detected. Created new row.")
                 else:
                     # Brand new product
                     conn.execute(
@@ -346,8 +346,8 @@ elif choice == "Orders":
             'p_name': '', 'p_code': '', 'p_qty': 1
         }
 
-        #Input layouts remainsssss!!
-        c1, c2 = st.columns(2)
+    # 2. Layout for inputs 
+    c1, c2 = st.columns(2)
     with c1:
         c_name = st.text_input("Customer Name", value=st.session_state.order_data['c_name'])
         c_phone = st.text_input("Phone Number", value=st.session_state.order_data['c_phone'])
@@ -359,7 +359,8 @@ elif choice == "Orders":
         p_pay = st.selectbox("Payment", ["Cash", "Fonepay", "D_Wallets"])
         p_date = st.date_input("Date", datetime.now())
 
-        st.session_state.order_data.update({
+    # Update session state with current inputs so data goes if page refreshes
+    st.session_state.order_data.update({
         'c_name': c_name, 'c_phone': c_phone, 'c_addr': c_addr,
         'p_name': p_name, 'p_code': p_code, 'p_qty': p_qty
     })
@@ -385,13 +386,13 @@ elif choice == "Orders":
                     stock = conn.execute("SELECT unit FROM products WHERE product_name = ?", (p_name,)).fetchone()
 
                 if stock is None:
-                    st.error(f" Error: Product '{p_name}' not found. Check the name and try again.")
+                    st.error(f"❌ Error: Product '{p_name}' not found. Check the name and try again.")
                     conn.close()
                 elif stock[0] < p_qty:
-                    st.error(f" Error: Not enough stock!")
+                    st.error(f"❌ Error: Not enough stock!")
                     conn.close()
                 else:
-                    
+                    #  SUCCESS CASE 
                     conn.execute("INSERT INTO pending (customer_name, address, phone_number, product_name, product_number, quantity, payment_method, ordered_date) VALUES (?,?,?,?,?,?,?,?)",
                                  (c_name, c_addr, c_phone, p_name, p_code, p_qty, p_pay, p_date.strftime("%Y-%m-%d")))
                     conn.commit()
