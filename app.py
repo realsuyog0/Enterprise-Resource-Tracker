@@ -498,5 +498,63 @@ elif choice == "Settings":
     st.title("⚙️ System Settings")
 
     
+    # --- 1. ACCESS KEY UPDATE ---
+    with st.expander("🔐 Change Access Key", expanded=False):
+        with st.form("change_key"):
+            old_key = st.text_input("Current Key", type="password")
+            new_key = st.text_input("New Key", type="password")
+            if st.form_submit_button("Update Key"):
+                conn = sqlite3.connect(DB_NAME)
+                current = conn.execute("SELECT key_value FROM settings WHERE key_name = 'access_key'").fetchone()[0]
+                if old_key == current:
+                    conn.execute("UPDATE settings SET key_value = ? WHERE key_name = 'access_key'", (new_key,))
+                    conn.commit()
+                    conn.close()
+                    st.success("✅ Key updated successfully!")
+                else:
+                    conn.close()
+                    st.error("❌ Wrong current key.")
 
+    st.divider()
+
+        # --- 2. DATABASE BACKUP (DOWNLOAD) ---
+    st.subheader("📥 Data Backup")
+    st.write("Download a copy of your database to your computer.")
+    try:
+        with open(DB_NAME, "rb") as f:
+            db_binary = f.read()
+        
+        st.download_button(
+            label="Download .db Backup",
+            data=db_binary,
+            file_name=f"PSJ_Backup_{datetime.now().strftime('%Y_%m_%d')}.db",
+            mime="application/octet-stream"
+        )
+    except Exception as e:
+        st.error(f"Error preparing download: {e}")
+
+    st.divider()
+
+        # --- 3. DATABASE RESTORE (UPLOAD) ---
+    st.subheader("📤 Restore System")
+    st.warning("⚠️ Warning: Restoring will overwrite all current data with the uploaded file.")
+    
+    uploaded_file = st.file_uploader("Upload a previously downloaded .db file", type=["db"])
+    
+    if uploaded_file is not None:
+        if st.button("🚀 Confirm Full Restore", type="primary"):
+            try:
+                # Close any active connections before overwriting
+                import gc
+                gc.collect() # Clears any hidden database connections
+                
+                with open(DB_NAME, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                
+                st.success("✅ Database restored! The app will now refresh.")
+                import time
+                time.sleep(2)
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Restore Failed: {e}. Ensure the file isn't open elsewhere.")
             
